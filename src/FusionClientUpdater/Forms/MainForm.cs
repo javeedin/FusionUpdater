@@ -220,7 +220,7 @@ public class MainForm : Form
 
         _settingsGroup.Controls.Add(new Label
         {
-            Text = "Relative to Install Path, e.g. graysWMSwebviewnew\\dist\\GraysWMS.exe",
+            Text = "Relative to Install Path, e.g. fusionclientweb\\graysWMSwebviewnew\\dist\\GraysWMS.exe",
             Location = new Point(bx, 117),
             AutoSize = true,
             Font = new Font("Segoe UI", 7.5F, FontStyle.Italic),
@@ -529,7 +529,9 @@ public class MainForm : Form
 
             _statusLabel.Text = "Installing...";
             var instProg = new Progress<int>(p => _installProgress.Value = Math.Clamp(p, 0, 100));
-            var zip = tempZip; var dest = _settings.InstallPath; var proc = _settings.ProcessToKill;
+            var zip = tempZip;
+            var dest = Path.Combine(_settings.InstallPath, AppConstants.ExtractSubfolder);
+            var proc = _settings.ProcessToKill;
             await Task.Run(() => _updaterService.InstallUpdate(zip, dest, proc, instProg));
 
             _settings.InstalledVersion = _latestRelease.TagName;
