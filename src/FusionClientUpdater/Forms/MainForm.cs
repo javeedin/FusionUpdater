@@ -29,14 +29,10 @@ public class MainForm : Form
     private ProgressBar _installProgress = null!;
     private Label _statusLabel = null!;
 
-    // Settings group
+    // Settings group (end-user only: install path + process name)
     private GroupBox _settingsGroup = null!;
-    private TextBox _ownerBox = null!;
-    private TextBox _repoBox = null!;
-    private TextBox _tokenBox = null!;
     private TextBox _installPathBox = null!;
     private TextBox _processBox = null!;
-    private TextBox _assetBox = null!;
     private Button _saveSettingsButton = null!;
 
     private Button _uploadButton = null!;
@@ -55,7 +51,7 @@ public class MainForm : Form
     private void InitializeComponentManual()
     {
         Text = "Fusion Client Updater";
-        ClientSize = new Size(600, 700);
+        ClientSize = new Size(600, 560);
         StartPosition = FormStartPosition.CenterScreen;
         FormBorderStyle = FormBorderStyle.FixedSingle;
         MaximizeBox = false;
@@ -114,13 +110,13 @@ public class MainForm : Form
         _statusGroup.Controls.Add(_installedVersionLabel);
         _statusGroup.Controls.Add(_latestVersionLabel);
 
-        // Buttons
+        // Buttons row
         _checkButton = new Button
         {
             Text = "Check for Update",
             Location = new Point(20, 190),
             Size = new Size(160, 36),
-            Font = new Font("Segoe UI", 9F, FontStyle.Regular)
+            Font = new Font("Segoe UI", 9F)
         };
         _checkButton.Click += async (s, e) => await CheckForUpdateAsync();
 
@@ -130,7 +126,7 @@ public class MainForm : Form
             Location = new Point(195, 190),
             Size = new Size(160, 36),
             Enabled = false,
-            Font = new Font("Segoe UI", 9F, FontStyle.Regular)
+            Font = new Font("Segoe UI", 9F)
         };
         _downloadButton.Click += async (s, e) => await DownloadAndInstallAsync();
 
@@ -139,7 +135,7 @@ public class MainForm : Form
             Text = "Open Upload Tool",
             Location = new Point(420, 190),
             Size = new Size(160, 36),
-            Font = new Font("Segoe UI", 9F, FontStyle.Regular)
+            Font = new Font("Segoe UI", 9F)
         };
         _uploadButton.Click += (s, e) =>
         {
@@ -147,86 +143,46 @@ public class MainForm : Form
             form.ShowDialog(this);
         };
 
-        var dlLabel = new Label
-        {
-            Text = "Download progress:",
-            Location = new Point(20, 240),
-            AutoSize = true
-        };
-        _downloadProgress = new ProgressBar
-        {
-            Location = new Point(20, 262),
-            Size = new Size(560, 22)
-        };
+        var dlLabel = new Label { Text = "Download progress:", Location = new Point(20, 240), AutoSize = true };
+        _downloadProgress = new ProgressBar { Location = new Point(20, 260), Size = new Size(560, 22) };
 
-        var instLabel = new Label
-        {
-            Text = "Install progress:",
-            Location = new Point(20, 294),
-            AutoSize = true
-        };
-        _installProgress = new ProgressBar
-        {
-            Location = new Point(20, 316),
-            Size = new Size(560, 22)
-        };
+        var instLabel = new Label { Text = "Install progress:", Location = new Point(20, 292), AutoSize = true };
+        _installProgress = new ProgressBar { Location = new Point(20, 312), Size = new Size(560, 22) };
 
         _statusLabel = new Label
         {
             Text = "Ready.",
-            Location = new Point(20, 348),
+            Location = new Point(20, 344),
             AutoSize = true,
             ForeColor = ColorTranslator.FromHtml("#1e3a5f"),
             Font = new Font("Segoe UI", 9F, FontStyle.Italic)
         };
 
-        // Settings group
+        // Settings group — only install path & process name for end users
         _settingsGroup = new GroupBox
         {
             Text = "Settings",
-            Location = new Point(20, 380),
-            Size = new Size(560, 290),
+            Location = new Point(20, 374),
+            Size = new Size(560, 140),
             Font = new Font("Segoe UI", 9F, FontStyle.Bold)
         };
 
-        var regularFont = new Font("Segoe UI", 9F, FontStyle.Regular);
-        int labelX = 15, boxX = 140, rowH = 32, startY = 30, boxW = 400;
+        var rf = new Font("Segoe UI", 9F, FontStyle.Regular);
+        int lx = 15, bx = 140, bw = 390;
 
-        _settingsGroup.Controls.Add(new Label { Text = "GitHub Owner:", Location = new Point(labelX, startY + 3), AutoSize = true, Font = regularFont });
-        _ownerBox = new TextBox { Location = new Point(boxX, startY), Size = new Size(boxW, 24), Font = regularFont };
-        _settingsGroup.Controls.Add(_ownerBox);
-
-        _settingsGroup.Controls.Add(new Label { Text = "Repository:", Location = new Point(labelX, startY + rowH + 3), AutoSize = true, Font = regularFont });
-        _repoBox = new TextBox { Location = new Point(boxX, startY + rowH), Size = new Size(boxW, 24), Font = regularFont };
-        _settingsGroup.Controls.Add(_repoBox);
-
-        _settingsGroup.Controls.Add(new Label { Text = "GitHub Token:", Location = new Point(labelX, startY + rowH * 2 + 3), AutoSize = true, Font = regularFont });
-        _tokenBox = new TextBox { Location = new Point(boxX, startY + rowH * 2), Size = new Size(boxW, 24), UseSystemPasswordChar = true, Font = regularFont };
-        _settingsGroup.Controls.Add(_tokenBox);
-
-        _settingsGroup.Controls.Add(new Label { Text = "Install Path:", Location = new Point(labelX, startY + rowH * 3 + 3), AutoSize = true, Font = regularFont });
-        _installPathBox = new TextBox { Location = new Point(boxX, startY + rowH * 3), Size = new Size(boxW, 24), Font = regularFont };
+        _settingsGroup.Controls.Add(new Label { Text = "Install Path:", Location = new Point(lx, 33), AutoSize = true, Font = rf });
+        _installPathBox = new TextBox { Location = new Point(bx, 30), Size = new Size(bw, 24), Font = rf };
         _settingsGroup.Controls.Add(_installPathBox);
 
-        _settingsGroup.Controls.Add(new Label { Text = "Process Name:", Location = new Point(labelX, startY + rowH * 4 + 3), AutoSize = true, Font = regularFont });
-        _processBox = new TextBox { Location = new Point(boxX, startY + rowH * 4), Size = new Size(boxW, 24), Font = regularFont };
+        _settingsGroup.Controls.Add(new Label { Text = "Process Name:", Location = new Point(lx, 65), AutoSize = true, Font = rf });
+        _processBox = new TextBox { Location = new Point(bx, 62), Size = new Size(bw, 24), Font = rf };
         _settingsGroup.Controls.Add(_processBox);
 
-        _settingsGroup.Controls.Add(new Label { Text = "Asset Name:", Location = new Point(labelX, startY + rowH * 5 + 3), AutoSize = true, Font = regularFont });
-        _assetBox = new TextBox { Location = new Point(boxX, startY + rowH * 5), Size = new Size(boxW, 24), Font = regularFont };
-        _settingsGroup.Controls.Add(_assetBox);
-
-        _saveSettingsButton = new Button
-        {
-            Text = "Save Settings",
-            Location = new Point(boxX, startY + rowH * 6 + 4),
-            Size = new Size(140, 32),
-            Font = regularFont
-        };
+        _saveSettingsButton = new Button { Text = "Save Settings", Location = new Point(bx, 97), Size = new Size(130, 30), Font = rf };
         _saveSettingsButton.Click += (s, e) => SaveSettingsFromUi();
         _settingsGroup.Controls.Add(_saveSettingsButton);
 
-        // Add controls to form
+        // Add all to form
         Controls.Add(_settingsGroup);
         Controls.Add(_statusLabel);
         Controls.Add(instLabel);
@@ -291,22 +247,14 @@ public class MainForm : Form
     private void LoadSettingsToUi()
     {
         _settings = _settingsService.Load();
-        _ownerBox.Text = _settings.GitHubOwner;
-        _repoBox.Text = _settings.GitHubRepo;
-        _tokenBox.Text = _settings.GitHubToken;
         _installPathBox.Text = _settings.InstallPath;
         _processBox.Text = _settings.ProcessToKill;
-        _assetBox.Text = _settings.AssetName;
     }
 
     private void SaveSettingsFromUi()
     {
-        _settings.GitHubOwner = _ownerBox.Text.Trim();
-        _settings.GitHubRepo = _repoBox.Text.Trim();
-        _settings.GitHubToken = _tokenBox.Text.Trim();
         _settings.InstallPath = _installPathBox.Text.Trim();
         _settings.ProcessToKill = _processBox.Text.Trim();
-        _settings.AssetName = _assetBox.Text.Trim();
 
         try
         {
@@ -324,33 +272,26 @@ public class MainForm : Form
     private void UpdateVersionLabels()
     {
         _installedVersionLabel.Text = $"Installed Version: {_settings.InstalledVersion}";
-        if (_latestRelease != null)
-            _latestVersionLabel.Text = $"Latest Version: {_latestRelease.TagName}";
+        _latestVersionLabel.Text = _latestRelease != null
+            ? $"Latest Version: {_latestRelease.TagName}"
+            : "Latest Version: (not checked)";
     }
 
     private static Version ParseVersion(string raw)
     {
         var s = (raw ?? "").Trim();
-        if (s.StartsWith("v", StringComparison.OrdinalIgnoreCase))
-            s = s[1..];
+        if (s.StartsWith("v", StringComparison.OrdinalIgnoreCase)) s = s[1..];
         return Version.TryParse(s, out var v) ? v : new Version(0, 0, 0);
     }
 
     private async Task CheckForUpdateAsync()
     {
-        if (string.IsNullOrWhiteSpace(_settings.GitHubOwner) || string.IsNullOrWhiteSpace(_settings.GitHubRepo))
-        {
-            MessageBox.Show(this, "Please set the GitHub Owner and Repository in Settings first.",
-                "Settings Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            return;
-        }
-
         SetBusy(true);
         _statusLabel.Text = "Checking for updates...";
         try
         {
             _latestRelease = await _gitHubService.GetLatestRelease(
-                _settings.GitHubOwner, _settings.GitHubRepo, _settings.AssetName, _settings.GitHubToken);
+                AppConstants.GitHubOwner, AppConstants.GitHubRepo, AppConstants.AssetName);
 
             UpdateVersionLabels();
 
@@ -365,8 +306,7 @@ public class MainForm : Form
                 if (!_latestRelease.HasAsset)
                 {
                     MessageBox.Show(this,
-                        $"A newer release ({_latestRelease.TagName}) was found, but it does not contain " +
-                        $"the asset '{_settings.AssetName}'.",
+                        $"A newer release ({_latestRelease.TagName}) was found, but the asset '{AppConstants.AssetName}' was not attached.",
                         "Asset Missing", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
                 else
@@ -407,7 +347,7 @@ public class MainForm : Form
     {
         if (_latestRelease == null || !_latestRelease.HasAsset)
         {
-            MessageBox.Show(this, "No downloadable release is available. Run 'Check for Update' first.",
+            MessageBox.Show(this, "No downloadable release found. Run 'Check for Update' first.",
                 "Nothing to Install", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
         }
@@ -416,33 +356,29 @@ public class MainForm : Form
         _downloadProgress.Value = 0;
         _installProgress.Value = 0;
 
-        var tempZip = Path.Combine(Path.GetTempPath(),
-            $"fusion_download_{Guid.NewGuid():N}.zip");
-
+        var tempZip = Path.Combine(Path.GetTempPath(), $"fusion_{Guid.NewGuid():N}.zip");
         try
         {
             _statusLabel.Text = "Downloading...";
             var dlProgress = new Progress<int>(p => _downloadProgress.Value = Math.Clamp(p, 0, 100));
-            await _gitHubService.DownloadAsset(_latestRelease.AssetUrl, tempZip, dlProgress, _settings.GitHubToken);
+            await _gitHubService.DownloadAsset(_latestRelease.AssetUrl, tempZip, dlProgress);
 
             _statusLabel.Text = "Installing...";
             var instProgress = new Progress<int>(p => _installProgress.Value = Math.Clamp(p, 0, 100));
+            var zip = tempZip;
+            var dest = _settings.InstallPath;
+            var proc = _settings.ProcessToKill;
 
-            var zipPath = tempZip;
-            var destPath = _settings.InstallPath;
-            var procName = _settings.ProcessToKill;
-
-            await Task.Run(() =>
-                _updaterService.InstallUpdate(zipPath, destPath, procName, instProgress));
+            await Task.Run(() => _updaterService.InstallUpdate(zip, dest, proc, instProgress));
 
             _settings.InstalledVersion = _latestRelease.TagName;
             _settingsService.Save(_settings);
             UpdateVersionLabels();
 
-            _statusLabel.Text = $"Installed version {_latestRelease.TagName}.";
+            _statusLabel.Text = $"Installed {_latestRelease.TagName} successfully.";
             _downloadButton.Enabled = false;
             MessageBox.Show(this,
-                $"Update installed successfully!\n\nVersion {_latestRelease.TagName} is now installed to {_settings.InstallPath}.",
+                $"Update installed successfully!\n\nVersion {_latestRelease.TagName} is now at {_settings.InstallPath}.",
                 "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
         catch (Exception ex)
@@ -463,8 +399,7 @@ public class MainForm : Form
         _checkButton.Enabled = !busy;
         _uploadButton.Enabled = !busy;
         _saveSettingsButton.Enabled = !busy;
-        if (busy)
-            _downloadButton.Enabled = false;
+        if (busy) _downloadButton.Enabled = false;
         Cursor = busy ? Cursors.WaitCursor : Cursors.Default;
     }
 }

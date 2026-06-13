@@ -5,15 +5,13 @@ namespace FusionClientUpdater.Forms;
 
 public class UploadForm : Form
 {
-    private readonly AppSettings _settings;
     private readonly GitHubService _gitHubService;
 
-    // Header
     private Panel _headerPanel = null!;
     private Label _titleLabel = null!;
     private Label _subtitleLabel = null!;
 
-    // Inputs
+    private TextBox _tokenBox = null!;
     private TextBox _tagBox = null!;
     private TextBox _nameBox = null!;
     private RichTextBox _notesBox = null!;
@@ -28,7 +26,6 @@ public class UploadForm : Form
 
     public UploadForm(AppSettings settings, GitHubService gitHubService)
     {
-        _settings = settings;
         _gitHubService = gitHubService;
         InitializeComponentManual();
     }
@@ -36,20 +33,18 @@ public class UploadForm : Form
     private void InitializeComponentManual()
     {
         Text = "Upload New Release";
-        ClientSize = new Size(550, 600);
+        ClientSize = new Size(560, 650);
         StartPosition = FormStartPosition.CenterParent;
         FormBorderStyle = FormBorderStyle.FixedSingle;
         MaximizeBox = false;
         Font = new Font("Segoe UI", 9F);
         BackColor = Color.White;
 
-        // Header
         _headerPanel = new Panel
         {
             Dock = DockStyle.Top,
             Height = 70,
-            BackColor = ColorTranslator.FromHtml("#1e3a5f"),
-            Padding = new Padding(20, 10, 20, 10)
+            BackColor = ColorTranslator.FromHtml("#1e3a5f")
         };
         _titleLabel = new Label
         {
@@ -61,7 +56,7 @@ public class UploadForm : Form
         };
         _subtitleLabel = new Label
         {
-            Text = "Create a GitHub release and upload an asset",
+            Text = $"Uploading to: {AppConstants.GitHubOwner}/{AppConstants.GitHubRepo}",
             ForeColor = Color.Gainsboro,
             Font = new Font("Segoe UI", 9F),
             AutoSize = true,
@@ -70,48 +65,60 @@ public class UploadForm : Form
         _headerPanel.Controls.Add(_titleLabel);
         _headerPanel.Controls.Add(_subtitleLabel);
 
-        var regularFont = new Font("Segoe UI", 9F, FontStyle.Regular);
-        int labelX = 20, boxX = 20, boxW = 510;
+        var rf = new Font("Segoe UI", 9F, FontStyle.Regular);
+        int lx = 20, bx = 20, bw = 520;
 
-        var tagLabel = new Label { Text = "Tag / Version (e.g. v1.2.0):", Location = new Point(labelX, 85), AutoSize = true, Font = regularFont };
-        _tagBox = new TextBox { Location = new Point(boxX, 107), Size = new Size(boxW, 24), Font = regularFont };
+        // Token (admin only field)
+        var tokenLabel = new Label { Text = "GitHub Token (admin only):", Location = new Point(lx, 85), AutoSize = true, Font = rf };
+        _tokenBox = new TextBox { Location = new Point(bx, 107), Size = new Size(bw, 24), Font = rf, UseSystemPasswordChar = true };
+        var tokenHint = new Label
+        {
+            Text = "Requires a token with 'repo' scope to create releases.",
+            Location = new Point(lx, 134),
+            AutoSize = true,
+            Font = new Font("Segoe UI", 8F, FontStyle.Italic),
+            ForeColor = Color.Gray
+        };
 
-        var nameLabel = new Label { Text = "Release Name:", Location = new Point(labelX, 140), AutoSize = true, Font = regularFont };
-        _nameBox = new TextBox { Location = new Point(boxX, 162), Size = new Size(boxW, 24), Font = regularFont };
+        var tagLabel = new Label { Text = "Tag / Version (e.g. v1.2.0):", Location = new Point(lx, 158), AutoSize = true, Font = rf };
+        _tagBox = new TextBox { Location = new Point(bx, 180), Size = new Size(bw, 24), Font = rf };
 
-        var notesLabel = new Label { Text = "Release Notes:", Location = new Point(labelX, 195), AutoSize = true, Font = regularFont };
-        _notesBox = new RichTextBox { Location = new Point(boxX, 217), Size = new Size(boxW, 90), Font = regularFont };
+        var nameLabel = new Label { Text = "Release Name:", Location = new Point(lx, 213), AutoSize = true, Font = rf };
+        _nameBox = new TextBox { Location = new Point(bx, 235), Size = new Size(bw, 24), Font = rf };
 
-        var fileLabel = new Label { Text = "Asset (zip) to upload:", Location = new Point(labelX, 315), AutoSize = true, Font = regularFont };
-        _browseButton = new Button { Text = "Browse...", Location = new Point(boxX, 337), Size = new Size(100, 30), Font = regularFont };
+        var notesLabel = new Label { Text = "Release Notes:", Location = new Point(lx, 268), AutoSize = true, Font = rf };
+        _notesBox = new RichTextBox { Location = new Point(bx, 290), Size = new Size(bw, 80), Font = rf };
+
+        var fileLabel = new Label { Text = "Asset (zip) to upload:", Location = new Point(lx, 380), AutoSize = true, Font = rf };
+        _browseButton = new Button { Text = "Browse...", Location = new Point(bx, 402), Size = new Size(100, 30), Font = rf };
         _browseButton.Click += (s, e) => BrowseForFile();
         _filePathLabel = new Label
         {
             Text = "No file selected.",
-            Location = new Point(boxX + 110, 343),
-            Size = new Size(400, 24),
+            Location = new Point(bx + 110, 408),
+            Size = new Size(410, 24),
             AutoEllipsis = true,
-            Font = regularFont,
+            Font = rf,
             ForeColor = Color.DimGray
         };
 
         _createButton = new Button
         {
             Text = "Create Release && Upload",
-            Location = new Point(boxX, 378),
-            Size = new Size(200, 36),
-            Font = regularFont
+            Location = new Point(bx, 445),
+            Size = new Size(210, 36),
+            Font = rf
         };
         _createButton.Click += async (s, e) => await CreateReleaseAsync();
 
-        var progLabel = new Label { Text = "Upload progress:", Location = new Point(labelX, 425), AutoSize = true, Font = regularFont };
-        _uploadProgress = new ProgressBar { Location = new Point(boxX, 447), Size = new Size(boxW, 22) };
+        var progLabel = new Label { Text = "Upload progress:", Location = new Point(lx, 492), AutoSize = true, Font = rf };
+        _uploadProgress = new ProgressBar { Location = new Point(bx, 514), Size = new Size(bw, 22) };
 
-        var logLabel = new Label { Text = "Log:", Location = new Point(labelX, 477), AutoSize = true, Font = regularFont };
+        var logLabel = new Label { Text = "Log:", Location = new Point(lx, 545), AutoSize = true, Font = rf };
         _logBox = new RichTextBox
         {
-            Location = new Point(boxX, 499),
-            Size = new Size(boxW, 85),
+            Location = new Point(bx, 567),
+            Size = new Size(bw, 68),
             ReadOnly = true,
             BackColor = Color.WhiteSmoke,
             Font = new Font("Consolas", 8.5F)
@@ -131,6 +138,9 @@ public class UploadForm : Form
         Controls.Add(nameLabel);
         Controls.Add(_tagBox);
         Controls.Add(tagLabel);
+        Controls.Add(tokenHint);
+        Controls.Add(_tokenBox);
+        Controls.Add(tokenLabel);
         Controls.Add(_headerPanel);
     }
 
@@ -152,38 +162,26 @@ public class UploadForm : Form
 
     private void Log(string message)
     {
-        if (_logBox.InvokeRequired)
-        {
-            _logBox.Invoke(new Action(() => Log(message)));
-            return;
-        }
+        if (_logBox.InvokeRequired) { _logBox.Invoke(new Action(() => Log(message))); return; }
         _logBox.AppendText($"{DateTime.Now:HH:mm:ss}  {message}{Environment.NewLine}");
     }
 
     private async Task CreateReleaseAsync()
     {
-        if (string.IsNullOrWhiteSpace(_settings.GitHubOwner) || string.IsNullOrWhiteSpace(_settings.GitHubRepo))
+        var token = _tokenBox.Text.Trim();
+        if (string.IsNullOrWhiteSpace(token))
         {
-            MessageBox.Show(this, "Please configure the GitHub Owner and Repository in Settings first.",
-                "Settings Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            return;
-        }
-        if (string.IsNullOrWhiteSpace(_settings.GitHubToken))
-        {
-            MessageBox.Show(this, "A GitHub token is required to create a release. Set it in Settings.",
-                "Token Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            MessageBox.Show(this, "Please enter your GitHub token.", "Token Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
         }
         if (string.IsNullOrWhiteSpace(_tagBox.Text))
         {
-            MessageBox.Show(this, "Please enter a tag/version.",
-                "Tag Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            MessageBox.Show(this, "Please enter a tag/version (e.g. v1.0.0).", "Tag Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
         }
         if (string.IsNullOrWhiteSpace(_selectedFile) || !File.Exists(_selectedFile))
         {
-            MessageBox.Show(this, "Please select a valid file to upload.",
-                "File Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            MessageBox.Show(this, "Please select a valid zip file to upload.", "File Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
         }
 
@@ -196,9 +194,9 @@ public class UploadForm : Form
         {
             var log = new Progress<string>(Log);
             await _gitHubService.CreateRelease(
-                _settings.GitHubOwner,
-                _settings.GitHubRepo,
-                _settings.GitHubToken,
+                AppConstants.GitHubOwner,
+                AppConstants.GitHubRepo,
+                token,
                 _tagBox.Text.Trim(),
                 _nameBox.Text.Trim(),
                 _notesBox.Text,
@@ -207,9 +205,8 @@ public class UploadForm : Form
 
             _uploadProgress.Style = ProgressBarStyle.Blocks;
             _uploadProgress.Value = 100;
-
             MessageBox.Show(this,
-                $"Release '{_tagBox.Text.Trim()}' was created and the asset was uploaded successfully.",
+                $"Release '{_tagBox.Text.Trim()}' created and asset uploaded successfully.",
                 "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
         catch (Exception ex)
