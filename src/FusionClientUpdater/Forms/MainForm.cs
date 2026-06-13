@@ -24,6 +24,7 @@ public class MainForm : Form
 
     // Actions
     private Button _checkButton = null!;
+    private Button _downloadOnlyButton = null!;
     private Button _downloadButton = null!;
     private ProgressBar _downloadProgress = null!;
     private ProgressBar _installProgress = null!;
@@ -121,11 +122,21 @@ public class MainForm : Form
         };
         _checkButton.Click += async (s, e) => await CheckForUpdateAsync();
 
+        _downloadOnlyButton = new Button
+        {
+            Text = "Download Only",
+            Location = new Point(195, 190),
+            Size = new Size(130, 36),
+            Enabled = false,
+            Font = new Font("Segoe UI", 9F)
+        };
+        _downloadOnlyButton.Click += async (s, e) => await DownloadOnlyAsync();
+
         _downloadButton = new Button
         {
             Text = "Download && Install",
-            Location = new Point(195, 190),
-            Size = new Size(160, 36),
+            Location = new Point(335, 190),
+            Size = new Size(150, 36),
             Enabled = false,
             Font = new Font("Segoe UI", 9F)
         };
@@ -134,7 +145,7 @@ public class MainForm : Form
         _uploadButton = new Button
         {
             Text = "Open Upload Tool",
-            Location = new Point(420, 190),
+            Location = new Point(420, 234),
             Size = new Size(160, 36),
             Font = new Font("Segoe UI", 9F)
         };
@@ -206,6 +217,7 @@ public class MainForm : Form
         Controls.Add(_downloadProgress);
         Controls.Add(_uploadButton);
         Controls.Add(_downloadButton);
+        Controls.Add(_downloadOnlyButton);
         Controls.Add(_checkButton);
         Controls.Add(_statusGroup);
         Controls.Add(_headerPanel);
@@ -327,6 +339,7 @@ public class MainForm : Form
             if (latest > installed)
             {
                 _downloadButton.Enabled = _latestRelease.HasAsset;
+                _downloadOnlyButton.Enabled = _latestRelease.HasAsset;
                 _statusLabel.Text = $"Update available: {_latestRelease.TagName}";
 
                 if (!_latestRelease.HasAsset)
@@ -352,6 +365,7 @@ public class MainForm : Form
             else
             {
                 _downloadButton.Enabled = false;
+                _downloadOnlyButton.Enabled = false;
                 _statusLabel.Text = "You are up to date.";
                 MessageBox.Show(this, "You already have the latest version installed.",
                     "Up To Date", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -362,6 +376,49 @@ public class MainForm : Form
             _statusLabel.Text = "Check failed.";
             Log($"ERROR: {ex.GetType().Name}: {ex.Message}");
             MessageBox.Show(this, $"Could not check for updates:\n{ex.Message}", "Error",
+                MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+        finally
+        {
+            SetBusy(false);
+        }
+    }
+
+    private async Task DownloadOnlyAsync()
+    {
+        if (_latestRelease == null || !_latestRelease.HasAsset)
+        {
+            MessageBox.Show(this, "No downloadable release found. Run 'Check for Update' first.",
+                "Nothing to Download", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+
+        using var save = new SaveFileDialog
+        {
+            Title = "Save downloaded file",
+            FileName = AppConstants.AssetName,
+            Filter = "Zip files (*.zip)|*.zip|All files (*.*)|*.*"
+        };
+        if (save.ShowDialog(this) != DialogResult.OK) return;
+
+        SetBusy(true);
+        _downloadProgress.Value = 0;
+        try
+        {
+            _statusLabel.Text = "Downloading...";
+            Log($"Downloading {_latestRelease.TagName} to {save.FileName}...");
+            var dlProgress = new Progress<int>(p => _downloadProgress.Value = Math.Clamp(p, 0, 100));
+            await _gitHubService.DownloadAsset(_latestRelease.AssetUrl, save.FileName, dlProgress);
+            _statusLabel.Text = "Download complete.";
+            Log($"Download complete: {save.FileName}");
+            MessageBox.Show(this, $"File saved to:\n{save.FileName}", "Download Complete",
+                MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+        catch (Exception ex)
+        {
+            _statusLabel.Text = "Download failed.";
+            Log($"ERROR: {ex.Message}");
+            MessageBox.Show(this, $"Download failed:\n{ex.Message}", "Error",
                 MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
         finally
@@ -404,6 +461,7 @@ public class MainForm : Form
 
             _statusLabel.Text = $"Installed {_latestRelease.TagName} successfully.";
             _downloadButton.Enabled = false;
+            _downloadOnlyButton.Enabled = false;
             MessageBox.Show(this,
                 $"Update installed successfully!\n\nVersion {_latestRelease.TagName} is now at {_settings.InstallPath}.",
                 "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -426,7 +484,7 @@ public class MainForm : Form
         _checkButton.Enabled = !busy;
         _uploadButton.Enabled = !busy;
         _saveSettingsButton.Enabled = !busy;
-        if (busy) _downloadButton.Enabled = false;
+        if (busy) { _downloadButton.Enabled = false; _downloadOnlyButton.Enabled = false; }
         Cursor = busy ? Cursors.WaitCursor : Cursors.Default;
     }
 }
