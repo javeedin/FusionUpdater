@@ -17,4 +17,5 @@ public class AppSettings
     public string ProcessToKill { get; set; } = AppConstants.DefaultProcessToKill;
     public string GitHubToken { get; set; } = "";
     public string AppExePath { get; set; } = AppConstants.DefaultAppExePath;
+    public bool UploadPasswordSaved { get; set; } = false;
 }
