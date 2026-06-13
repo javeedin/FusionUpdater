@@ -8,7 +8,7 @@ public static class AppConstants
     public const string DefaultInstallPath = @"C:\fusion";
     public const string DefaultProcessToKill = "GraysWMS";
     public const string DefaultAppExePath = @"fusionclientweb\graysWMSwebviewnew\dist\GraysWMS.exe";
-    public const string ExtractSubfolder = @"fusionclientweb\graysWMSwebviewnew";
+    public const string ExtractSubfolder = "fusionclientweb";
 }
 
 public class AppSettings
