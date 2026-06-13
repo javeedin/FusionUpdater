@@ -1,4 +1,3 @@
-using System.ComponentModel;
 using FusionClientUpdater.Models;
 using FusionClientUpdater.Services;
 
