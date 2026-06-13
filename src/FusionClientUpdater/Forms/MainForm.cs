@@ -36,6 +36,7 @@ public class MainForm : Form
     private Button _saveSettingsButton = null!;
 
     private Button _uploadButton = null!;
+    private RichTextBox _logBox = null!;
 
     // Tray
     private NotifyIcon _notifyIcon = null!;
@@ -51,7 +52,7 @@ public class MainForm : Form
     private void InitializeComponentManual()
     {
         Text = "Fusion Client Updater";
-        ClientSize = new Size(600, 560);
+        ClientSize = new Size(600, 660);
         StartPosition = FormStartPosition.CenterScreen;
         FormBorderStyle = FormBorderStyle.FixedSingle;
         MaximizeBox = false;
@@ -182,7 +183,21 @@ public class MainForm : Form
         _saveSettingsButton.Click += (s, e) => SaveSettingsFromUi();
         _settingsGroup.Controls.Add(_saveSettingsButton);
 
+        // Log box
+        var logLabel = new Label { Text = "Log:", Location = new Point(20, 528), AutoSize = true, Font = rf };
+        _logBox = new RichTextBox
+        {
+            Location = new Point(20, 548),
+            Size = new Size(560, 90),
+            ReadOnly = true,
+            BackColor = Color.WhiteSmoke,
+            Font = new Font("Consolas", 8F),
+            ScrollBars = RichTextBoxScrollBars.Vertical
+        };
+
         // Add all to form
+        Controls.Add(_logBox);
+        Controls.Add(logLabel);
         Controls.Add(_settingsGroup);
         Controls.Add(_statusLabel);
         Controls.Add(instLabel);
@@ -277,6 +292,13 @@ public class MainForm : Form
             : "Latest Version: (not checked)";
     }
 
+    private void Log(string message)
+    {
+        if (_logBox.InvokeRequired) { _logBox.Invoke(new Action(() => Log(message))); return; }
+        _logBox.AppendText($"{DateTime.Now:HH:mm:ss}  {message}{Environment.NewLine}");
+        _logBox.ScrollToCaret();
+    }
+
     private static Version ParseVersion(string raw)
     {
         var s = (raw ?? "").Trim();
@@ -290,12 +312,14 @@ public class MainForm : Form
     {
         SetBusy(true);
         _statusLabel.Text = "Checking for updates...";
+        Log($"Checking for updates from {AppConstants.GitHubOwner}/{AppConstants.GitHubRepo}...");
         try
         {
             _latestRelease = await _gitHubService.GetLatestRelease(
                 AppConstants.GitHubOwner, AppConstants.GitHubRepo, AppConstants.AssetName);
 
             UpdateVersionLabels();
+            Log($"Latest release: {_latestRelease.TagName} | Asset found: {_latestRelease.HasAsset}");
 
             var installed = ParseVersion(_settings.InstalledVersion);
             var latest = ParseVersion(_latestRelease.TagName);
@@ -336,6 +360,7 @@ public class MainForm : Form
         catch (Exception ex)
         {
             _statusLabel.Text = "Check failed.";
+            Log($"ERROR: {ex.GetType().Name}: {ex.Message}");
             MessageBox.Show(this, $"Could not check for updates:\n{ex.Message}", "Error",
                 MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
