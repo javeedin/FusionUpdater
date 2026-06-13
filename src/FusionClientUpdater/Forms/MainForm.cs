@@ -280,7 +280,9 @@ public class MainForm : Form
     private static Version ParseVersion(string raw)
     {
         var s = (raw ?? "").Trim();
+        // Strip leading 'v' or 'v.' e.g. v2.0.0 or v.2.0.0
         if (s.StartsWith("v", StringComparison.OrdinalIgnoreCase)) s = s[1..];
+        if (s.StartsWith(".")) s = s[1..];
         return Version.TryParse(s, out var v) ? v : new Version(0, 0, 0);
     }
 
