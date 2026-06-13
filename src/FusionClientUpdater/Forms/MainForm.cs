@@ -30,13 +30,15 @@ public class MainForm : Form
     private ProgressBar _installProgress = null!;
     private Label _statusLabel = null!;
 
-    // Settings group (end-user only: install path + process name)
+    // Settings group (end-user only: install path + process name + exe path)
     private GroupBox _settingsGroup = null!;
     private TextBox _installPathBox = null!;
     private TextBox _processBox = null!;
+    private TextBox _appExeBox = null!;
     private Button _saveSettingsButton = null!;
 
     private Button _uploadButton = null!;
+    private Button _launchButton = null!;
     private RichTextBox _logBox = null!;
 
     // Tray
@@ -142,6 +144,19 @@ public class MainForm : Form
         };
         _downloadButton.Click += async (s, e) => await DownloadAndInstallAsync();
 
+        _launchButton = new Button
+        {
+            Text = "▶  Launch Application",
+            Location = new Point(20, 234),
+            Size = new Size(180, 36),
+            Font = new Font("Segoe UI", 9F, FontStyle.Bold),
+            BackColor = ColorTranslator.FromHtml("#1e3a5f"),
+            ForeColor = Color.White,
+            FlatStyle = FlatStyle.Flat
+        };
+        _launchButton.FlatAppearance.BorderSize = 0;
+        _launchButton.Click += (s, e) => LaunchApplication();
+
         _uploadButton = new Button
         {
             Text = "Open Upload Tool",
@@ -170,12 +185,12 @@ public class MainForm : Form
             Font = new Font("Segoe UI", 9F, FontStyle.Italic)
         };
 
-        // Settings group — only install path & process name for end users
+        // Settings group
         _settingsGroup = new GroupBox
         {
             Text = "Settings",
             Location = new Point(20, 374),
-            Size = new Size(560, 140),
+            Size = new Size(560, 170),
             Font = new Font("Segoe UI", 9F, FontStyle.Bold)
         };
 
@@ -190,7 +205,21 @@ public class MainForm : Form
         _processBox = new TextBox { Location = new Point(bx, 62), Size = new Size(bw, 24), Font = rf };
         _settingsGroup.Controls.Add(_processBox);
 
-        _saveSettingsButton = new Button { Text = "Save Settings", Location = new Point(bx, 97), Size = new Size(130, 30), Font = rf };
+        _settingsGroup.Controls.Add(new Label { Text = "App EXE Path:", Location = new Point(lx, 97), AutoSize = true, Font = rf });
+        _appExeBox = new TextBox { Location = new Point(bx, 94), Size = new Size(bw, 24), Font = rf };
+        _settingsGroup.Controls.Add(_appExeBox);
+
+        var exeHint = new Label
+        {
+            Text = "Relative to Install Path, e.g. graysWMSwebviewnew\\dist\\GraysWMS.exe",
+            Location = new Point(bx, 120),
+            AutoSize = true,
+            Font = new Font("Segoe UI", 7.5F, FontStyle.Italic),
+            ForeColor = Color.Gray
+        };
+        _settingsGroup.Controls.Add(exeHint);
+
+        _saveSettingsButton = new Button { Text = "Save Settings", Location = new Point(bx, 130), Size = new Size(130, 30), Font = rf };
         _saveSettingsButton.Click += (s, e) => SaveSettingsFromUi();
         _settingsGroup.Controls.Add(_saveSettingsButton);
 
@@ -216,6 +245,7 @@ public class MainForm : Form
         Controls.Add(dlLabel);
         Controls.Add(_downloadProgress);
         Controls.Add(_uploadButton);
+        Controls.Add(_launchButton);
         Controls.Add(_downloadButton);
         Controls.Add(_downloadOnlyButton);
         Controls.Add(_checkButton);
@@ -225,6 +255,7 @@ public class MainForm : Form
         // Tray icon
         var trayMenu = new ContextMenuStrip();
         trayMenu.Items.Add("Show", null, (s, e) => RestoreFromTray());
+        trayMenu.Items.Add("Launch Application", null, (s, e) => LaunchApplication());
         trayMenu.Items.Add("Check for Update", null, async (s, e) => { RestoreFromTray(); await CheckForUpdateAsync(); });
         trayMenu.Items.Add(new ToolStripSeparator());
         trayMenu.Items.Add("Exit", null, (s, e) => { _reallyExit = true; Close(); });
@@ -276,12 +307,14 @@ public class MainForm : Form
         _settings = _settingsService.Load();
         _installPathBox.Text = _settings.InstallPath;
         _processBox.Text = _settings.ProcessToKill;
+        _appExeBox.Text = _settings.AppExePath;
     }
 
     private void SaveSettingsFromUi()
     {
         _settings.InstallPath = _installPathBox.Text.Trim();
         _settings.ProcessToKill = _processBox.Text.Trim();
+        _settings.AppExePath = _appExeBox.Text.Trim();
 
         try
         {
@@ -302,6 +335,38 @@ public class MainForm : Form
         _latestVersionLabel.Text = _latestRelease != null
             ? $"Latest Version: {_latestRelease.TagName}"
             : "Latest Version: (not checked)";
+    }
+
+    private void LaunchApplication()
+    {
+        var exePath = Path.IsPathRooted(_settings.AppExePath)
+            ? _settings.AppExePath
+            : Path.Combine(_settings.InstallPath, _settings.AppExePath);
+
+        if (!File.Exists(exePath))
+        {
+            MessageBox.Show(this,
+                $"Application not found at:\n{exePath}\n\nPlease check the App EXE Path in Settings.",
+                "Not Found", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            return;
+        }
+
+        try
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = exePath,
+                WorkingDirectory = Path.GetDirectoryName(exePath),
+                UseShellExecute = true
+            });
+            Log($"Launched: {exePath}");
+        }
+        catch (Exception ex)
+        {
+            Log($"ERROR launching app: {ex.Message}");
+            MessageBox.Show(this, $"Could not launch the application:\n{ex.Message}", "Error",
+                MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
     }
 
     private void Log(string message)
