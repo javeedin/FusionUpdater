@@ -6,7 +6,7 @@ namespace FusionClientUpdater.Services;
 public class ReleaseInfo
 {
     public string TagName { get; set; } = "";
-    public int ReleaseId { get; set; }
+    public long ReleaseId { get; set; }
     public string AssetUrl { get; set; } = "";
     public string ReleaseNotes { get; set; } = "";
     public bool HasAsset => !string.IsNullOrEmpty(AssetUrl);
@@ -80,7 +80,7 @@ public class GitHubService
             Directory.CreateDirectory(dir);
 
         await using var contentStream = await response.Content.ReadAsStreamAsync();
-        await using var fileStream = new FileStream(destPath, FileMode.Create, FileAccess.Write, FileShare.None, 81920, true);
+        await using var fileStream = new FileStream(destPath, System.IO.FileMode.Create, FileAccess.Write, FileShare.None, 81920, true);
 
         var buffer = new byte[81920];
         long totalRead = 0;
