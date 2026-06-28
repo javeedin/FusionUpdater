@@ -1,7 +1,7 @@
 @echo off
 echo Publishing FusionClientUpdater as single self-contained EXE...
 
-dotnet publish src\FusionClientUpdater.csproj ^
+dotnet publish src\FusionClientUpdater\FusionClientUpdater.csproj ^
     -c Release ^
     -r win-x64 ^
     --self-contained true ^
