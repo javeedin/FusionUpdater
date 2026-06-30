@@ -1,5 +1,6 @@
 using FusionClientUpdater.Models;
 using FusionClientUpdater.Services;
+using Microsoft.Win32;
 
 namespace FusionClientUpdater.Forms;
 
@@ -51,6 +52,7 @@ public class MainForm : Form
         InitializeComponentManual();
         LoadSettingsToUi();
         UpdateVersionLabels();
+        RegisterStartup();
     }
 
     private void InitializeComponentManual()
@@ -400,6 +402,21 @@ public class MainForm : Form
             MessageBox.Show(this, $"Could not launch the application:\n{ex.Message}", "Error",
                 MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
+    }
+
+    // ── Startup registration ─────────────────────────────────────
+    private static void RegisterStartup()
+    {
+        const string keyName = "FusionClientUpdater";
+        var exePath = $"\"{Environment.ProcessPath}\" --minimized";
+        try
+        {
+            using var key = Registry.CurrentUser.OpenSubKey(
+                @"SOFTWARE\Microsoft\Windows\CurrentVersion\Run", writable: true);
+            if (key?.GetValue(keyName) as string != exePath)
+                key?.SetValue(keyName, exePath);
+        }
+        catch { /* silently ignore if registry access is denied */ }
     }
 
     // ── Log ──────────────────────────────────────────────────────

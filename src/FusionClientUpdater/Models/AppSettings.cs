@@ -19,4 +19,5 @@ public class AppSettings
     public string GitHubToken { get; set; } = "";
     public string AppExePath { get; set; } = AppConstants.DefaultAppExePath;
     public bool UploadPasswordSaved { get; set; } = false;
+    public bool RunAtStartup { get; set; } = false;
 }
