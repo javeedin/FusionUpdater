@@ -1,6 +1,4 @@
-using System.Net.Http;
 using Octokit;
-using Octokit.Internal;
 
 namespace FusionClientUpdater.Services;
 
@@ -16,14 +14,10 @@ public class ReleaseInfo
 public class GitHubService
 {
     private const string ProductHeaderName = "FusionClientUpdater";
-    private static readonly TimeSpan DefaultTimeout = TimeSpan.FromMinutes(5);
 
     private GitHubClient CreateClient(string? token = null)
     {
-        var httpClient = new HttpClient { Timeout = DefaultTimeout };
-        var httpClientAdapter = new HttpClientAdapter(httpClient);
-        var client = new GitHubClient(new ProductHeaderValue(ProductHeaderName), httpClientAdapter);
-
+        var client = new GitHubClient(new ProductHeaderValue(ProductHeaderName));
         if (!string.IsNullOrWhiteSpace(token))
         {
             client.Credentials = new Credentials(token);
