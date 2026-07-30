@@ -178,6 +178,22 @@ public class UploadForm : Form
             _selectedFile = dialog.FileName;
             _filePathLabel.Text = _selectedFile;
             _filePathLabel.ForeColor = Color.Black;
+
+            var fileInfo = new FileInfo(_selectedFile);
+            var fileSizeMB = fileInfo.Length / (1024.0 * 1024.0);
+            if (fileSizeMB > 500)
+            {
+                MessageBox.Show(this,
+                    $"Warning: This file is very large ({fileSizeMB:F1} MB).\n\n" +
+                    $"Uploading large files (>500 MB) may take a long time and could timeout.\n\n" +
+                    $"Consider:\n" +
+                    $"- Compressing the file further\n" +
+                    $"- Splitting into multiple smaller releases\n\n" +
+                    $"If upload fails, try again with a smaller file.",
+                    "Large File Warning",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
+            }
         }
     }
 

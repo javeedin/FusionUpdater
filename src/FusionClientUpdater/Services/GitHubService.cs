@@ -166,7 +166,15 @@ public class GitHubService
             var release = await client.Repository.Release.Get(owner, repo, tagName);
 
             await using var stream = File.OpenRead(filePath);
-            log?.Report($"Stream opened, size: {FormatBytes(stream.Length)}");
+            var fileSizeMB = stream.Length / (1024.0 * 1024.0);
+            log?.Report($"Stream opened, size: {FormatBytes(stream.Length)} ({fileSizeMB:F1} MB)");
+
+            if (fileSizeMB > 500)
+            {
+                log?.Report($"⚠ WARNING: File is very large ({fileSizeMB:F1} MB)");
+                log?.Report($"⚠ Large file uploads may take several minutes or timeout");
+                log?.Report($"⚠ Consider splitting into smaller files or compressing further");
+            }
 
             var upload = new ReleaseAssetUpload
             {
@@ -175,19 +183,28 @@ public class GitHubService
                 RawData = stream
             };
 
-            log?.Report($"Sending asset to GitHub...");
+            log?.Report($"Sending asset to GitHub (this may take several minutes for large files)...");
+            var startTime = DateTime.Now;
             var asset = await client.Repository.Release.UploadAsset(release, upload);
-            log?.Report($"✓ Asset uploaded: {asset.Name} (size: {FormatBytes(asset.Size)})");
+            var duration = DateTime.Now - startTime;
+
+            var uploadSpeedMBps = fileSizeMB / duration.TotalSeconds;
+            log?.Report($"✓ Asset uploaded: {asset.Name}");
+            log?.Report($"✓ Size: {FormatBytes(asset.Size)}, Upload time: {duration:hh\\:mm\\:ss}, Speed: {uploadSpeedMBps:F2} MB/s");
             log?.Report("✓ Release completed successfully.");
         }
         catch (OperationCanceledException ex)
         {
             log?.Report($"✗ Upload cancelled: {ex.Message}");
-            throw new InvalidOperationException("Asset upload was cancelled. Check your network connection.", ex);
+            log?.Report($"✗ Reason: Likely timeout on large file upload (750 MB)");
+            log?.Report($"✗ Recommendation: Consider compressing the file further or splitting into smaller releases");
+            throw new InvalidOperationException("Asset upload was cancelled due to timeout on large file.\n\nTry:\n1. Compressing the zip further\n2. Splitting into smaller files\n3. Using better network connection", ex);
         }
         catch (Exception ex)
         {
             log?.Report($"✗ Failed to upload asset: {ex.Message}");
+            if (ex.InnerException != null)
+                log?.Report($"✗ Inner error: {ex.InnerException.Message}");
             throw new InvalidOperationException($"Failed to upload asset: {ex.Message}", ex);
         }
     }
