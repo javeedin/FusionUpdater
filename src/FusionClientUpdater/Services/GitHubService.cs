@@ -20,10 +20,10 @@ public class GitHubService
 
     private GitHubClient CreateClient(string? token = null)
     {
-        var client = new GitHubClient(new ProductHeaderValue(ProductHeaderName))
-        {
-            HttpClient = new HttpClientAdapter(new HttpClient { Timeout = DefaultTimeout })
-        };
+        var httpClient = new HttpClient { Timeout = DefaultTimeout };
+        var httpClientAdapter = new HttpClientAdapter(httpClient);
+        var client = new GitHubClient(new ProductHeaderValue(ProductHeaderName), httpClientAdapter);
+
         if (!string.IsNullOrWhiteSpace(token))
         {
             client.Credentials = new Credentials(token);
