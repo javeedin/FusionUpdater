@@ -33,7 +33,12 @@ public class UploadForm : Form
         _settingsService = new SettingsService();
         _gitHubService = gitHubService;
         InitializeComponentManual();
-        _tokenBox.Text = _settings.GitHubToken;
+
+        // Load token from settings, or from environment variable if available
+        var tokenFromEnv = Environment.GetEnvironmentVariable("GITHUB_TOKEN");
+        var tokenToUse = !string.IsNullOrEmpty(tokenFromEnv) ? tokenFromEnv : _settings.GitHubToken;
+
+        _tokenBox.Text = tokenToUse;
         _rememberTokenCheck.Checked = !string.IsNullOrEmpty(_settings.GitHubToken);
     }
 
@@ -187,16 +192,19 @@ public class UploadForm : Form
         var token = _tokenBox.Text.Trim();
         if (string.IsNullOrWhiteSpace(token))
         {
+            Log("ERROR: Token is required");
             MessageBox.Show(this, "Please enter your GitHub token.", "Token Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
         }
         if (string.IsNullOrWhiteSpace(_tagBox.Text))
         {
+            Log("ERROR: Tag/version is required");
             MessageBox.Show(this, "Please enter a tag/version (e.g. v1.0.0).", "Tag Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
         }
         if (string.IsNullOrWhiteSpace(_selectedFile) || !File.Exists(_selectedFile))
         {
+            Log("ERROR: File selection invalid or file no longer exists");
             MessageBox.Show(this, "Please select a valid zip file to upload.", "File Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             return;
         }
@@ -205,10 +213,17 @@ public class UploadForm : Form
         _browseButton.Enabled = false;
         _uploadProgress.Style = ProgressBarStyle.Marquee;
         Cursor = Cursors.WaitCursor;
+        _logBox.Clear();
+
+        Log("Starting release creation process...");
+        Log($"Target: {AppConstants.GitHubOwner}/{AppConstants.GitHubRepo}");
+        Log($"Time: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
 
         try
         {
             var log = new Progress<string>(Log);
+            Log("Calling GitHubService.CreateRelease...");
+
             await _gitHubService.CreateRelease(
                 AppConstants.GitHubOwner,
                 AppConstants.GitHubRepo,
@@ -226,13 +241,27 @@ public class UploadForm : Form
             _settings.GitHubToken = _rememberTokenCheck.Checked ? token : "";
             _settingsService.Save(_settings);
 
+            Log("Release upload completed successfully.");
             MessageBox.Show(this,
                 $"Release '{_tagBox.Text.Trim()}' created and asset uploaded successfully.",
                 "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
+        catch (OperationCanceledException ex)
+        {
+            Log($"ERROR (Cancelled): {ex.Message}");
+            Log("The operation was cancelled. This may indicate a network timeout.");
+            Log("Try again or check your internet connection.");
+            _uploadProgress.Style = ProgressBarStyle.Blocks;
+            _uploadProgress.Value = 0;
+            MessageBox.Show(this, $"Release upload was cancelled.\n\nThis usually means:\n- Network timeout\n- Connection was interrupted\n- Server took too long to respond\n\nTry again or check your internet connection.\n\n{ex.Message}", "Operation Cancelled",
+                MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        }
         catch (Exception ex)
         {
-            Log($"ERROR: {ex.Message}");
+            Log($"ERROR: {ex.GetType().Name}: {ex.Message}");
+            if (ex.InnerException != null)
+                Log($"Inner Error: {ex.InnerException.Message}");
+
             _uploadProgress.Style = ProgressBarStyle.Blocks;
             _uploadProgress.Value = 0;
             MessageBox.Show(this, $"Could not create the release:\n{ex.Message}", "Error",
@@ -243,6 +272,7 @@ public class UploadForm : Form
             _createButton.Enabled = true;
             _browseButton.Enabled = true;
             Cursor = Cursors.Default;
+            Log("Release creation process ended.");
         }
     }
 }
