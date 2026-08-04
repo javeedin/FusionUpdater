@@ -482,8 +482,9 @@ public class MainForm : Form
 
                 if (result == DialogResult.Yes)
                 {
-                    _downloadButton.Enabled = _latestRelease.HasAsset;
-                    _downloadOnlyButton.Enabled = _latestRelease.HasAsset;
+                    SetBusy(false);
+                    await DownloadAndInstallAsync();
+                    return;
                 }
                 else
                 {
