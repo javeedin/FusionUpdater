@@ -453,6 +453,9 @@ public class MainForm : Form
             var installed = ParseVersion(_settings.InstalledVersion);
             var latest = ParseVersion(_latestRelease.TagName);
 
+            Log($"Version comparison: Installed={installed} vs Latest={latest}");
+            Log($"Is newer? {latest > installed}");
+
             if (latest > installed)
             {
                 _downloadButton.Enabled = _latestRelease.HasAsset;
