@@ -541,8 +541,13 @@ public class MainForm : Form
     // ── Download & Install ───────────────────────────────────────
     private async Task DownloadAndInstallAsync()
     {
-        if (_latestRelease == null || !_latestRelease.HasAsset) return;
+        if (_latestRelease == null || !_latestRelease.HasAsset)
+        {
+            Log("ERROR: No release available to download");
+            return;
+        }
 
+        Log($"Starting download and install for version {_latestRelease.TagName}");
         SetBusy(true);
         _downloadProgress.Value = 0;
         _installProgress.Value = 0;
@@ -551,18 +556,32 @@ public class MainForm : Form
         try
         {
             _statusLabel.Text = "Downloading...";
-            var dlProg = new Progress<int>(p => _downloadProgress.Value = Math.Clamp(p, 0, 100));
+            Log($"Downloading from: {_latestRelease.AssetUrl}");
+            var dlProg = new Progress<int>(p =>
+            {
+                _downloadProgress.Value = Math.Clamp(p, 0, 100);
+                if (p % 25 == 0) Log($"Download progress: {p}%");
+            });
             await _gitHubService.DownloadAsset(_latestRelease.AssetUrl, tempZip, dlProg);
+            Log("Download completed successfully");
 
             _statusLabel.Text = "Installing...";
-            var instProg = new Progress<int>(p => _installProgress.Value = Math.Clamp(p, 0, 100));
+            Log($"Installing to: {_settings.InstallPath}");
+            var instProg = new Progress<int>(p =>
+            {
+                _installProgress.Value = Math.Clamp(p, 0, 100);
+                if (p % 25 == 0) Log($"Install progress: {p}%");
+            });
             var zip = tempZip;
             var dest = Path.Combine(_settings.InstallPath, AppConstants.ExtractSubfolder);
             var proc = _settings.ProcessToKill;
             await Task.Run(() => _updaterService.InstallUpdate(zip, dest, proc, instProg));
+            Log("Installation completed successfully");
 
+            Log($"Updating version from {_settings.InstalledVersion} to {_latestRelease.TagName}");
             _settings.InstalledVersion = _latestRelease.TagName;
             _settingsService.Save(_settings);
+            Log($"Version saved to settings.json: {_latestRelease.TagName}");
             UpdateVersionLabels();
 
             _statusLabel.Text = $"Installed {_latestRelease.TagName} successfully.";
