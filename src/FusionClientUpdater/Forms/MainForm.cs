@@ -475,11 +475,21 @@ public class MainForm : Form
             }
             else
             {
-                _downloadButton.Enabled = false;
-                _downloadOnlyButton.Enabled = false;
                 _statusLabel.Text = "You are up to date.";
-                MessageBox.Show(this, "You already have the latest version installed.",
-                    "Up To Date", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                var result = MessageBox.Show(this,
+                    "You already have the latest version installed.\n\nStill want to download?",
+                    "Up To Date", MessageBoxButtons.YesNo, MessageBoxIcon.Information);
+
+                if (result == DialogResult.Yes)
+                {
+                    _downloadButton.Enabled = _latestRelease.HasAsset;
+                    _downloadOnlyButton.Enabled = _latestRelease.HasAsset;
+                }
+                else
+                {
+                    _downloadButton.Enabled = false;
+                    _downloadOnlyButton.Enabled = false;
+                }
             }
         }
         catch (Exception ex)
