@@ -2,6 +2,14 @@ name: Build Updater EXE
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - claude/modest-gates-fgg3do
+      - main
+      - master
+    paths:
+      - 'src/**'
+      - '.github/workflows/build-updater.yml'
 
 jobs:
   build:
