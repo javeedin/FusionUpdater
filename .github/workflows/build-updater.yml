@@ -1,0 +1,32 @@
+name: Build Updater EXE
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Publish (framework-dependent, small — needs .NET 8 Desktop Runtime on target PC)
+        run: dotnet publish src/FusionClientUpdater/FusionClientUpdater.csproj -c Release -r win-x64 --self-contained false -p:PublishSingleFile=true -o publish/framework-dependent
+
+      - name: Publish (self-contained, larger — runs on any Windows x64 PC)
+        run: dotnet publish src/FusionClientUpdater/FusionClientUpdater.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o publish/self-contained
+
+      - name: Upload framework-dependent exe
+        uses: actions/upload-artifact@v4
+        with:
+          name: FusionClientUpdater-win-x64
+          path: publish/framework-dependent/FusionClientUpdater.exe
+
+      - name: Upload self-contained exe
+        uses: actions/upload-artifact@v4
+        with:
+          name: FusionClientUpdater-win-x64-selfcontained
+          path: publish/self-contained/FusionClientUpdater.exe
