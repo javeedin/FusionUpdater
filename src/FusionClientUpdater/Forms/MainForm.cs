@@ -8,6 +8,9 @@ public class MainForm : Form
 {
     private const string UploadPassword = "Gitupload";
 
+    private static string AppVersion =>
+        System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.0.0";
+
     private readonly SettingsService _settingsService = new();
     private readonly GitHubService _gitHubService = new();
     private readonly UpdaterService _updaterService = new();
@@ -57,7 +60,7 @@ public class MainForm : Form
 
     private void InitializeComponentManual()
     {
-        Text = "Fusion Client Updater";
+        Text = $"Fusion Client Updater v{AppVersion}";
         ClientSize = new Size(600, 680);
         StartPosition = FormStartPosition.CenterScreen;
         FormBorderStyle = FormBorderStyle.FixedSingle;
