@@ -238,6 +238,14 @@ public class UploadForm : Form
         try
         {
             var log = new Progress<string>(Log);
+            var uploadProgress = new Progress<UploadProgress>(p =>
+            {
+                if (_uploadProgress.Style != ProgressBarStyle.Blocks)
+                    _uploadProgress.Style = ProgressBarStyle.Blocks;
+                _uploadProgress.Value = p.Percent;
+                var eta = p.Eta is { } e ? $", {e:hh\\:mm\\:ss} left" : "";
+                Text = $"Upload New Release - {p.Percent}% ({p.BytesPerSecond / 1048576.0:F1} MB/s{eta})";
+            });
             Log("Calling GitHubService.CreateRelease...");
 
             await _gitHubService.CreateRelease(
@@ -248,7 +256,8 @@ public class UploadForm : Form
                 _nameBox.Text.Trim(),
                 _notesBox.Text,
                 _selectedFile,
-                log);
+                log,
+                uploadProgress);
 
             _uploadProgress.Style = ProgressBarStyle.Blocks;
             _uploadProgress.Value = 100;
@@ -288,6 +297,7 @@ public class UploadForm : Form
             _createButton.Enabled = true;
             _browseButton.Enabled = true;
             Cursor = Cursors.Default;
+            Text = "Upload New Release";
             Log("Release creation process ended.");
         }
     }
