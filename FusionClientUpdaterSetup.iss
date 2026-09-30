@@ -1,5 +1,5 @@
 #define MyAppName "Fusion Client Updater"
-#define MyAppVersion "1.0.0"
+#define MyAppVersion "1.1.0"
 #define MyAppPublisher "Javeedin"
 #define MyAppExeName "FusionClientUpdater.exe"
 
